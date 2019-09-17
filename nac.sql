@@ -25,9 +25,7 @@ SELECT CPF,
  TITULO
 FROM DOCUMENTOS;
 
-SELECT CPF,
- VERIFICA_CPF(CPF)
-FROM DOCUMENTOS;
+
 
 SET SERVEROUTPUT ON
 
@@ -35,8 +33,7 @@ create or replace function VERIFICA_CPF(cpf documentos.cpf%type)
 RETURN VARCHAR2 AS
     TYPE v_array_type IS TABLE OF NUMBER INDEX BY PLS_INTEGER; 
     v_array_dv v_array_type;
-    v_sum_nine number :=0;
-    v_sum_ten number :=0;
+    v_sum number :=0;
 BEGIN 
     IF (LENGTH(cpf) != 11) THEN
         RETURN 'CPF INVÁLIDO';
@@ -44,23 +41,27 @@ BEGIN
     FOR i In 0..10 LOOP
         v_array_dv(i -1) := TO_NUMBER(SUBSTR(cpf, i, 1));
     END LOOP;
-    FOR i In 0..8 LOOP
+    FOR i IN 0..9 LOOP
     --((i+1) * v_array_dv(i))
-        v_sum_nine := v_sum_nine + ((i+1) *v_array_dv(i));
+        v_sum := v_sum + ((i+1) *v_array_dv(i));
+        IF (i = 8 ) THEN
+            IF(MOD(v_sum, 11) != v_array_dv(9)) THEN
+                RETURN 'CPF INVÁLIDO';
+            END IF;
+        ELSIF (i = 9) THEN
+            IF(MOD(v_sum, 11) != v_array_dv(10)) THEN
+                RETURN 'CPF SINVÁLIDO';
+            END IF;
+        END IF;
     END LOOP;
-    IF(MOD(v_sum_nine, 11) != v_array_dv(9)) THEN
-        RETURN 'CPF INVÁLIDO';
-    END IF;
-    FOR i In 0..9 LOOP
-    --((i+1) * v_array_dv(i))
-        v_sum_ten := v_sum_ten + ((i+1) * v_array_dv(i));
-    END LOOP;
+
+    RETURN 'CPF ';
     
-    IF(MOD(v_sum_ten, 11) != v_array_dv(10)) THEN
-        RETURN 'CPF INVÁLIDO';
-    END IF;
-    v_sum_ten := 3;
     --MOD(v_sum_nine, 11)
-    RETURN 'CPF VÁLIDO';
+    
 END VERIFICA_CPF;
 /
+
+SELECT CPF,
+ VERIFICA_CPF(CPF)
+FROM DOCUMENTOS;
